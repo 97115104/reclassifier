@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reclassifier - JSON Field Editor</title>
+    <link rel="stylesheet" href="./css/main.css">
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+</head>
+<body>
+    <h1>Reclassifier</h1>
+    <p class="subtitle">Add new fields to your JSON data</p>
+    <div class="how-to-use-row">
+        <button id="btn-info" class="btn-how-to-use">How to use</button>
+    </div>
+
+    <!-- Info Modal -->
+    <div id="info-modal" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>About Reclassifier</h3>
+                <button id="btn-close-info" class="btn-modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Reclassifier</strong> is a serverless tool for adding, editing, and reclassifying fields in JSON data.</p>
+                <p><strong>Primary use case:</strong> Reclassing AI-generated data or JSON objects to build more consistent and repeatable AI workflows. When AI outputs need human review, correction, or enrichment, Reclassifier lets you walk through each object one at a time and add or edit fields interactively.</p>
+                <h4>Common uses</h4>
+                <ul>
+                    <li>Add classification labels (genre, category, type) to AI-generated datasets</li>
+                    <li>Edit or correct existing fields across many objects</li>
+                    <li>Enrich JSON exports with human review scores or notes</li>
+                    <li>Tag and annotate data for fine-tuning or evaluation pipelines</li>
+                    <li>Standardize inconsistent field values across a collection</li>
+                </ul>
+                <h4>How it works</h4>
+                <ol>
+                    <li>Upload a JSON file</li>
+                    <li>Choose fields to add or existing fields to edit</li>
+                    <li>Walk through each object, filling in values</li>
+                    <li>Download the updated JSON</li>
+                </ol>
+                <p>All processing happens locally in your browser. No data is sent to any server.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Step 1: Upload -->
+        <div id="step-upload" class="step active">
+            <div id="drop-area" class="drop-area">
+                <p>Drag &amp; drop a JSON file here or click to select</p>
+                <input type="file" id="file-input" accept=".json" class="hidden">
+            </div>
+            <div class="validator-section">
+                <h4>Or paste JSON to validate</h4>
+                <textarea id="json-paste" class="json-paste" placeholder='Paste your JSON here...' rows="6"></textarea>
+                <div class="validator-actions">
+                    <button id="btn-validate" class="btn-secondary">Validate JSON</button>
+                    <button id="btn-load-pasted" disabled>Load Valid JSON</button>
+                </div>
+                <div id="validator-result" class="validator-result hidden"></div>
+            </div>
+        </div>
+
+        <!-- Step 2: Summary -->
+        <div id="step-summary" class="step hidden">
+            <h3>Upload Summary</h3>
+            <div id="json-summary"></div>
+            <div class="actions">
+                <button id="btn-back-upload" class="btn-secondary">Back</button>
+                <button id="btn-to-fields">Configure New or Edit Existing Fields</button>
+            </div>
+        </div>
+
+        <!-- Step 3: Configure Fields -->
+        <div id="step-fields" class="step hidden">
+            <h3>Add New or Edit Existing Fields</h3>
+            <div class="field-config-header">
+                <label>
+                    Target:
+                    <select id="target-select"></select>
+                </label>
+            </div>
+            <div id="existing-fields-hint" class="existing-fields-hint hidden">
+                <span class="hint-label">Existing fields:</span>
+                <span id="existing-fields-list"></span>
+            </div>
+            <div id="fields-list"></div>
+            <button id="btn-add-field" class="btn-add">+ Add Field</button>
+            <div class="actions">
+                <button id="btn-back-summary" class="btn-secondary">Back</button>
+                <button id="btn-to-classify" disabled>Start Classifying</button>
+            </div>
+        </div>
+
+        <!-- Step 4: Classify -->
+        <div id="step-classify" class="step hidden">
+            <div id="classify-progress"></div>
+            <div class="classify-layout">
+                <div class="classify-main">
+                    <div id="classify-card" class="classify-card"></div>
+                    <div class="classify-actions">
+                        <button id="btn-prev" class="btn-secondary">Back</button>
+                        <button id="btn-skip" class="btn-secondary">Skip</button>
+                        <button id="btn-save-item">Save &amp; Next</button>
+                    </div>
+                </div>
+                <div class="classify-sidebar">
+                    <h4>History</h4>
+                    <div id="history-list" class="history-list"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 5: Results -->
+        <div id="step-results" class="step hidden">
+            <h3>Summary of Changes</h3>
+            <div id="results-summary"></div>
+            <h3>Diff</h3>
+            <div class="diff-wrapper">
+                <pre id="diff-output"></pre>
+            </div>
+            <h3>Updated JSON</h3>
+            <div class="json-output-wrapper">
+                <pre id="json-output"></pre>
+                <div class="output-actions">
+                    <button id="btn-validate-output" class="btn-secondary">Validate JSON</button>
+                    <button id="btn-copy">Copy to Clipboard</button>
+                    <button id="btn-download">Download JSON</button>
+                </div>
+                <div id="output-validator-result" class="validator-result hidden"></div>
+            </div>
+            <div class="actions">
+                <button id="btn-back-classify" class="btn-secondary">Back to Editing</button>
+                <button id="btn-restart" class="btn-secondary">Start Over</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="license-section">
+        <div class="footer-links">
+            <div class="license-badge">
+                MIT License
+                <div class="license-tooltip">
+                    MIT License<br><br>
+                    Copyright (c) 2025 Austin Harshberger<br><br>
+                    Permission is hereby granted, free of charge, to any person obtaining a copy
+                    of this software and associated documentation files (the "Software"), to deal
+                    in the Software without restriction, including without limitation the rights
+                    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+                    copies of the Software, and to permit persons to whom the Software is
+                    furnished to do so, subject to the following conditions:<br><br>
+                    The above copyright notice and this permission notice shall be included in all
+                    copies or substantial portions of the Software.
+                </div>
+            </div>
+            <a href="https://attest.ink" class="attest-badge" target="_blank" rel="noopener noreferrer">
+                built with ai
+            </a>
+        </div>
+        <div class="author-info">
+            Created by Austin Harshberger
+        </div>
+    </footer>
+
+    <script src="./js/parser.js"></script>
+    <script src="./js/app.js"></script>
+</body>
+</html>
