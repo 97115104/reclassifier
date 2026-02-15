@@ -883,7 +883,7 @@ button:disabled {
 
 .attest-badge {
     display: inline-block;
-    background: #2563eb;
+    background: #555;
     color: white;
     padding: 5px 10px;
     border-radius: 4px;
@@ -893,7 +893,7 @@ button:disabled {
 }
 
 .attest-badge:hover {
-    background: #1d4ed8;
+    background: #444;
 }
 
 .author-info {
