@@ -25,7 +25,24 @@
                 <div id="add-item-fields"></div>
                 <div class="add-item-actions">
                     <button id="btn-cancel-add-item" class="btn-secondary">Cancel</button>
+                    <button id="btn-add-another-item" class="btn-secondary">Add Another Item</button>
                     <button id="btn-save-new-item">Add Item</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- What's Next Modal (after adding item) -->
+    <div id="whats-next-modal" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Item Added!</h3>
+            </div>
+            <div class="modal-body">
+                <p id="whats-next-message" style="margin-bottom: 20px; color: #555;">What would you like to do next?</p>
+                <div class="whats-next-actions">
+                    <button id="btn-continue-edit-fields" class="btn-primary">Continue to Edit Fields</button>
+                    <button id="btn-view-diff" class="btn-secondary">View Diff</button>
                 </div>
             </div>
         </div>
@@ -107,6 +124,7 @@
                 <p class="config-section-desc">Add new entries (books, projects, etc.) to this collection.</p>
                 <button id="btn-add-item-step3" class="btn-add-item-inline">+ Add New Item to Collection</button>
                 <div id="new-items-count" class="new-items-count hidden"></div>
+                <div id="new-items-list" class="new-items-list hidden"></div>
             </div>
 
             <!-- Edit Fields Section -->

@@ -19,12 +19,14 @@ const JSONParser = {
         this._walk(data, '', results);
 
         // If the root is a single object (not array), treat it as a single-item collection
+        // Note: Can't add items to a root object, only to arrays
         if (results.length === 0 && typeof data === 'object' && data !== null && !Array.isArray(data)) {
             results.push({
                 path: '(root object)',
                 count: 1,
                 sampleKeys: Object.keys(data).slice(0, 8),
                 items: [data],
+                sourceArray: null, // Root objects can't have items added
                 isRootObject: true
             });
         }
@@ -43,6 +45,7 @@ const JSONParser = {
                     count: objectItems.length,
                     sampleKeys: sampleKeys.slice(0, 8),
                     items: objectItems,
+                    sourceArray: node, // Reference to the actual array in rawData
                     isRootObject: false
                 });
             }

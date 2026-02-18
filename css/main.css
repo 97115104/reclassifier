@@ -469,6 +469,73 @@ button:disabled {
     display: none;
 }
 
+.new-items-list {
+    margin-top: 12px;
+    border: 1px solid #c8e6c9;
+    border-radius: 6px;
+    background: #f1f8e9;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.new-items-list.hidden {
+    display: none;
+}
+
+.new-item-entry {
+    display: flex;
+    align-items: center;
+    padding: 10px 12px;
+    border-bottom: 1px solid #c8e6c9;
+    gap: 10px;
+}
+
+.new-item-entry:last-child {
+    border-bottom: none;
+}
+
+.new-item-badge {
+    background: #4caf50;
+    color: white;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    font-weight: bold;
+}
+
+.new-item-title {
+    flex: 1;
+    font-weight: 500;
+    color: #333;
+}
+
+.new-item-preview {
+    font-size: 12px;
+    color: #666;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.btn-edit-new-item {
+    background: transparent;
+    border: 1px solid #888;
+    color: #555;
+    padding: 4px 10px;
+    font-size: 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-edit-new-item:hover {
+    background: #333;
+    border-color: #333;
+    color: white;
+}
+
 .field-row {
     display: flex;
     gap: 8px;
@@ -1059,9 +1126,61 @@ button:disabled {
     border-top: 1px solid #e0e0e0;
 }
 
+/* What's Next Modal */
+.whats-next-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.whats-next-actions button {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 14px;
+}
+
+.btn-primary {
+    background: #333;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-primary:hover {
+    background: #444;
+}
+
 .add-item-required {
     color: #c62828;
     margin-left: 2px;
+}
+
+/* Summary highlights for new items */
+.summary-highlight {
+    background: #e8f5e9;
+    border-radius: 4px;
+    padding: 8px 12px !important;
+    margin-bottom: 8px;
+}
+
+.summary-value-highlight {
+    color: #2e7d32;
+    font-weight: bold;
+}
+
+.summary-sub {
+    font-size: 13px;
+    color: #666;
+}
+
+/* JSON output new item highlight */
+.json-new-item {
+    background: linear-gradient(90deg, #e8f5e9 0%, #c8e6c9 100%);
+    border-left: 3px solid #4caf50;
+    display: inline;
+    padding: 2px 0;
 }
 
 /* Responsive */

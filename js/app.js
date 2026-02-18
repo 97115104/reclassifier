@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // --- State ---
     let rawData = null;
     let originalDataSnapshot = null; // Deep copy of original for diffing
+    let originalItemCounts = {}; // Track original item counts per collection index
     let fileName = '';
     let collections = [];
     let fieldConfigs = [];
@@ -191,6 +192,14 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     document.getElementById('btn-to-fields').addEventListener('click', () => {
+        // Capture original snapshot before any modifications
+        if (!originalDataSnapshot) {
+            originalDataSnapshot = JSON.stringify(rawData, null, 2);
+            // Capture original item counts per collection
+            collections.forEach((c, i) => {
+                originalItemCounts[i] = c.items.length;
+            });
+        }
         populateTargetSelect();
         updateExistingFieldsHint();
         renderFieldRows();
@@ -359,9 +368,18 @@ document.addEventListener('DOMContentLoaded', function () {
     const btnCloseAddItem = document.getElementById('btn-close-add-item');
     const btnCancelAddItem = document.getElementById('btn-cancel-add-item');
     const btnSaveNewItem = document.getElementById('btn-save-new-item');
+    const btnAddAnotherItem = document.getElementById('btn-add-another-item');
     const newItemsCountEl = document.getElementById('new-items-count');
+    const newItemsListEl = document.getElementById('new-items-list');
+
+    // What's Next Modal elements
+    const whatsNextModal = document.getElementById('whats-next-modal');
+    const whatsNextMessage = document.getElementById('whats-next-message');
+    const btnContinueEditFields = document.getElementById('btn-continue-edit-fields');
+    const btnViewDiff = document.getElementById('btn-view-diff');
 
     let newItemsAddedCount = 0;
+    let newItemsAdded = []; // Array of { item, title, collectionPath }
     let addItemContext = null; // 'step3' or 'step4'
 
     function openAddItemModal(context) {
@@ -466,18 +484,210 @@ document.addEventListener('DOMContentLoaded', function () {
         addItemModal.classList.add('hidden');
         addItemFields.innerHTML = '';
         addItemContext = null;
+        editingItemIndex = null;
+        // Reset modal header and buttons
+        document.querySelector('#add-item-modal .modal-header h3').textContent = 'Add New Item';
+        btnAddAnotherItem.style.display = '';
+        btnSaveNewItem.textContent = 'Add Item';
     }
 
     function updateNewItemsCount() {
         if (newItemsAddedCount > 0) {
             newItemsCountEl.textContent = newItemsAddedCount + ' new item' + (newItemsAddedCount !== 1 ? 's' : '') + ' added';
             newItemsCountEl.classList.remove('hidden');
+            
+            // Render the list of new items
+            renderNewItemsList();
         } else {
             newItemsCountEl.classList.add('hidden');
+            newItemsListEl.classList.add('hidden');
         }
     }
 
-    function saveNewItem() {
+    function renderNewItemsList() {
+        if (newItemsAdded.length === 0) {
+            newItemsListEl.classList.add('hidden');
+            return;
+        }
+
+        let html = '';
+        newItemsAdded.forEach((entry, i) => {
+            const keys = Object.keys(entry.item);
+            const previewKeys = keys.slice(0, 3).filter(k => k !== entry.titleKey);
+            const previewParts = [];
+            previewKeys.forEach(k => {
+                const val = entry.item[k];
+                if (typeof val === 'string' || typeof val === 'number') {
+                    previewParts.push(truncate(String(val), 20));
+                }
+            });
+            const preview = previewParts.join(' • ');
+
+            html += '<div class="new-item-entry" data-item-index="' + i + '">';
+            html += '<span class="new-item-badge">new</span>';
+            html += '<span class="new-item-title">' + escapeHtml(entry.title) + '</span>';
+            if (preview) {
+                html += '<span class="new-item-preview">' + escapeHtml(preview) + '</span>';
+            }
+            html += '<button class="btn-edit-new-item" data-item-index="' + i + '">Edit</button>';
+            html += '</div>';
+        });
+
+        newItemsListEl.innerHTML = html;
+        newItemsListEl.classList.remove('hidden');
+
+        // Wire up edit buttons
+        newItemsListEl.querySelectorAll('.btn-edit-new-item').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const idx = parseInt(btn.dataset.itemIndex);
+                openEditItemModal(idx);
+            });
+        });
+    }
+
+    let editingItemIndex = null; // Track which item we're editing
+
+    function openEditItemModal(itemIndex) {
+        editingItemIndex = itemIndex;
+        const entry = newItemsAdded[itemIndex];
+        if (!entry) return;
+
+        addItemContext = 'step3';
+        
+        // Get the target collection
+        const targetIdx = parseInt(targetSelect.value);
+        const targetCollection = collections[targetIdx];
+
+        if (!targetCollection || !targetCollection.items) {
+            showToast('No collection selected.');
+            return;
+        }
+
+        // Get all unique keys from existing items to build the form
+        const allKeys = JSONParser._commonKeys(targetCollection.items);
+        
+        addItemFields.innerHTML = '';
+
+        // Update modal header to show "Edit Item" and hide "Add Another Item" button
+        document.querySelector('#add-item-modal .modal-header h3').textContent = 'Edit Item';
+        btnAddAnotherItem.style.display = 'none';
+        btnSaveNewItem.textContent = 'Save Changes';
+
+        allKeys.forEach(key => {
+            // Sample values to determine field type
+            const sampleValues = targetCollection.items
+                .map(item => item[key])
+                .filter(v => v !== undefined && v !== null);
+            
+            const fieldType = detectFieldType(sampleValues);
+            const group = document.createElement('div');
+            group.className = 'add-item-field-group';
+
+            const label = document.createElement('label');
+            label.textContent = key;
+            group.appendChild(label);
+
+            // Get current value from the item being edited
+            const currentValue = entry.item[key];
+            const valueStr = currentValue !== undefined && currentValue !== null ? String(currentValue) : '';
+
+            let input;
+            if (fieldType === 'boolean') {
+                input = document.createElement('select');
+                input.innerHTML = '<option value="">-- Select --</option><option value="true"' + (currentValue === true ? ' selected' : '') + '>True</option><option value="false"' + (currentValue === false ? ' selected' : '') + '>False</option>';
+            } else if (fieldType === 'number') {
+                input = document.createElement('input');
+                input.type = 'text';
+                input.inputMode = 'numeric';
+                input.placeholder = 'Enter a number';
+                input.value = valueStr;
+            } else if (fieldType === 'longtext') {
+                input = document.createElement('textarea');
+                input.placeholder = 'Enter value...';
+                input.rows = 3;
+                input.value = valueStr;
+            } else if (fieldType === 'url') {
+                input = document.createElement('input');
+                input.type = 'url';
+                input.placeholder = 'https://...';
+                input.value = valueStr;
+            } else {
+                input = document.createElement('input');
+                input.type = 'text';
+                input.placeholder = 'Enter value...';
+                input.value = valueStr;
+            }
+            input.dataset.fieldName = key;
+            input.dataset.fieldType = fieldType;
+            group.appendChild(input);
+
+            // Add type hint
+            const hint = document.createElement('div');
+            hint.className = 'field-type-hint';
+            hint.textContent = fieldType === 'longtext' ? 'text' : fieldType;
+            group.appendChild(hint);
+
+            addItemFields.appendChild(group);
+        });
+
+        addItemModal.classList.remove('hidden');
+    }
+
+    function updateExistingItem() {
+        if (editingItemIndex === null) return;
+
+        const entry = newItemsAdded[editingItemIndex];
+        if (!entry) return;
+
+        let hasValue = false;
+
+        addItemFields.querySelectorAll('[data-field-name]').forEach(input => {
+            const fieldName = input.dataset.fieldName;
+            const fieldType = input.dataset.fieldType;
+            let value = input.value.trim();
+
+            if (value === '') {
+                // Remove empty fields
+                delete entry.item[fieldName];
+                return;
+            }
+
+            hasValue = true;
+
+            if (fieldType === 'boolean') {
+                entry.item[fieldName] = value === 'true';
+            } else if (fieldType === 'number') {
+                const num = Number(value);
+                entry.item[fieldName] = isNaN(num) ? value : num;
+            } else {
+                entry.item[fieldName] = value;
+            }
+        });
+
+        if (!hasValue) {
+            showToast('Please fill in at least one field.');
+            return false;
+        }
+
+        // Update title
+        const titleKey = JSONParser.detectTitleKey(Object.keys(entry.item));
+        entry.title = titleKey && entry.item[titleKey] ? String(entry.item[titleKey]) : 'New Item';
+        entry.titleKey = titleKey;
+
+        editingItemIndex = null;
+        closeAddItemModal();
+        showToast('Item updated');
+        renderNewItemsList();
+        
+        return true;
+    }
+
+    /**
+     * Core function to collect form data and save the new item to the collection.
+     * Returns { success: boolean, itemTitle: string, targetCollection: object } or null on failure.
+     */
+    function collectAndSaveItem() {
         const newItem = {};
         let hasValue = false;
 
@@ -502,7 +712,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (!hasValue) {
             showToast('Please fill in at least one field.');
-            return;
+            return null;
         }
 
         // Get the target collection based on context
@@ -514,20 +724,54 @@ document.addEventListener('DOMContentLoaded', function () {
             targetCollection = currentTarget;
         }
 
-        // Add the new item to the collection
+        // Check if we can add items to this collection
+        if (!targetCollection.sourceArray) {
+            showToast('Cannot add items to a root object. The JSON must be an array.');
+            return null;
+        }
+
+        // Add the new item to the actual source array in rawData
+        targetCollection.sourceArray.push(newItem);
+        // Also update the items reference for UI consistency
         targetCollection.items.push(newItem);
+        targetCollection.count = targetCollection.items.length;
         newItemsAddedCount++;
 
         // Get title for display
         const titleKey = JSONParser.detectTitleKey(Object.keys(newItem));
         const itemTitle = titleKey && newItem[titleKey] ? String(newItem[titleKey]) : 'New Item';
 
+        // Track the item for display in the list
+        newItemsAdded.push({
+            item: newItem,
+            title: itemTitle,
+            titleKey: titleKey,
+            collectionPath: targetCollection.path
+        });
+
+        return { success: true, itemTitle, targetCollection, newItem };
+    }
+
+    function saveNewItem() {
+        // Check if we're editing an existing item
+        if (editingItemIndex !== null) {
+            updateExistingItem();
+            return;
+        }
+
+        const savedContext = addItemContext;
+        const result = collectAndSaveItem();
+        if (!result) return;
+
+        const { itemTitle, targetCollection, newItem } = result;
+
         closeAddItemModal();
         showToast('Added: ' + itemTitle);
 
-        if (addItemContext === 'step3') {
-            // In Step 3, just update the count display
+        if (savedContext === 'step3') {
+            // In Step 3, update count and show "What's Next" modal
             updateNewItemsCount();
+            showWhatsNextModal(itemTitle);
         } else {
             // In Step 4, add to history and jump to the new item
             history.push({
@@ -541,11 +785,64 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    function saveAndAddAnother() {
+        const savedContext = addItemContext;
+        const result = collectAndSaveItem();
+        if (!result) return;
+
+        const { itemTitle } = result;
+
+        showToast('Added: ' + itemTitle);
+        updateNewItemsCount();
+
+        // Clear the form fields and keep modal open for another item
+        addItemFields.querySelectorAll('[data-field-name]').forEach(input => {
+            if (input.tagName === 'SELECT') {
+                input.selectedIndex = 0;
+            } else {
+                input.value = '';
+            }
+        });
+
+        // Focus the first input
+        const firstInput = addItemFields.querySelector('[data-field-name]');
+        if (firstInput) firstInput.focus();
+    }
+
+    function showWhatsNextModal(itemTitle) {
+        whatsNextMessage.textContent = 'Successfully added "' + itemTitle + '". What would you like to do next?';
+        whatsNextModal.classList.remove('hidden');
+    }
+
+    function closeWhatsNextModal() {
+        whatsNextModal.classList.add('hidden');
+    }
+
     btnAddItem.addEventListener('click', () => openAddItemModal('step4'));
     btnAddItemStep3.addEventListener('click', () => openAddItemModal('step3'));
     btnCloseAddItem.addEventListener('click', closeAddItemModal);
     btnCancelAddItem.addEventListener('click', closeAddItemModal);
     btnSaveNewItem.addEventListener('click', saveNewItem);
+    btnAddAnotherItem.addEventListener('click', saveAndAddAnother);
+
+    // What's Next modal event handlers
+    btnContinueEditFields.addEventListener('click', () => {
+        closeWhatsNextModal();
+        // Stay on step 3 to configure fields
+    });
+
+    btnViewDiff.addEventListener('click', () => {
+        closeWhatsNextModal();
+        // originalDataSnapshot was captured when entering step 3
+        showResults();
+    });
+
+    // Close What's Next modal on overlay click
+    whatsNextModal.addEventListener('click', (e) => {
+        if (e.target === whatsNextModal) {
+            closeWhatsNextModal();
+        }
+    });
 
     // Close modal on overlay click
     addItemModal.addEventListener('click', (e) => {
@@ -585,8 +882,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     document.getElementById('btn-back-summary').addEventListener('click', () => {
-        // Reset new items count when going back
+        // Reset new items tracking when going back
+        // Note: Items remain in rawData but tracking is reset
         newItemsAddedCount = 0;
+        newItemsAdded = [];
         updateNewItemsCount();
         showStep(stepSummary);
     });
@@ -602,7 +901,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (validFields.length === 0) {
             // Only items added, no fields to edit - go straight to results
-            originalDataSnapshot = JSON.stringify(rawData, null, 2);
+            // originalDataSnapshot was already captured when entering step 3
             showResults();
             return;
         }
@@ -615,8 +914,10 @@ document.addEventListener('DOMContentLoaded', function () {
     // STEP 4: Classify
     // ============================
     function startClassification() {
-        // Snapshot the original data before any modifications
-        originalDataSnapshot = JSON.stringify(rawData, null, 2);
+        // Snapshot the original data if not already captured
+        if (!originalDataSnapshot) {
+            originalDataSnapshot = JSON.stringify(rawData, null, 2);
+        }
 
         const targetGroups = {};
         fieldConfigs.forEach(f => {
@@ -917,6 +1218,23 @@ document.addEventListener('DOMContentLoaded', function () {
         const oldLines = originalDataSnapshot.split('\n');
         const newLines = newDataStr.split('\n');
 
+        // Calculate new items added across all collections
+        let totalNewItems = 0;
+        const newItemsPerCollection = {};
+        collections.forEach((c, i) => {
+            const originalCount = originalItemCounts[i] || 0;
+            const currentCount = c.items.length;
+            const newCount = currentCount - originalCount;
+            if (newCount > 0) {
+                totalNewItems += newCount;
+                newItemsPerCollection[i] = {
+                    path: c.path,
+                    count: newCount,
+                    startIndex: originalCount // Index where new items start
+                };
+            }
+        });
+
         // Compute diff
         const diffOps = computeDiff(oldLines, newLines);
 
@@ -950,7 +1268,19 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
 
-        let summaryHtml = '<div class="summary-item"><span class="summary-label">Fields configured</span><span class="summary-value">' + totalFields + '</span></div>';
+        let summaryHtml = '';
+
+        // Show new items added prominently at the top
+        if (totalNewItems > 0) {
+            summaryHtml += '<div class="summary-item summary-highlight"><span class="summary-label">New items added</span><span class="summary-value summary-value-highlight">' + totalNewItems + ' new item' + (totalNewItems !== 1 ? 's' : '') + '</span></div>';
+            Object.values(newItemsPerCollection).forEach(info => {
+                summaryHtml += '<div class="summary-item summary-sub"><span class="summary-label">&nbsp;&nbsp;' + escapeHtml(info.path) + '</span><span class="summary-value">+' + info.count + '</span></div>';
+            });
+        }
+
+        if (totalFields > 0) {
+            summaryHtml += '<div class="summary-item"><span class="summary-label">Fields configured</span><span class="summary-value">' + totalFields + '</span></div>';
+        }
         Object.keys(fieldsAdded).forEach(fn => {
             summaryHtml += '<div class="summary-item"><span class="summary-label">' + escapeHtml(fn) + ' (new)</span><span class="summary-value">' + fieldsAdded[fn] + ' objects updated</span></div>';
         });
@@ -958,7 +1288,7 @@ document.addEventListener('DOMContentLoaded', function () {
             summaryHtml += '<div class="summary-item"><span class="summary-label">' + escapeHtml(fn) + ' (edited)</span><span class="summary-value">' + fieldsEdited[fn] + ' objects updated</span></div>';
         });
 
-        if (linesAdded === 0 && linesRemoved === 0) {
+        if (linesAdded === 0 && linesRemoved === 0 && totalNewItems === 0) {
             summaryHtml += '<div class="summary-item"><span class="summary-label">Result</span><span class="summary-value">No changes made</span></div>';
         } else {
             summaryHtml += '<div class="summary-item"><span class="summary-label">Diff</span><span class="summary-value">+' + linesAdded + ' / -' + linesRemoved + ' lines</span></div>';
@@ -973,7 +1303,40 @@ document.addEventListener('DOMContentLoaded', function () {
             diffOutput.innerHTML = renderDiffHtml(diffOps);
         }
 
-        jsonOutput.textContent = newDataStr;
+        // Render JSON with highlighted new items
+        jsonOutput.innerHTML = renderJsonWithHighlights(rawData, newItemsPerCollection);
+    }
+
+    /**
+     * Render JSON with new items highlighted
+     */
+    function renderJsonWithHighlights(data, newItemsPerCollection) {
+        const jsonStr = JSON.stringify(data, null, 2);
+        
+        // If no new items, just return escaped JSON
+        if (Object.keys(newItemsPerCollection).length === 0) {
+            return escapeHtml(jsonStr);
+        }
+
+        // Build a list of new item JSON representations for matching
+        const newItemMarkers = [];
+        Object.entries(newItemsPerCollection).forEach(([colIndex, info]) => {
+            const col = collections[colIndex];
+            for (let i = info.startIndex; i < col.items.length; i++) {
+                const itemJson = JSON.stringify(col.items[i], null, 2);
+                newItemMarkers.push(itemJson);
+            }
+        });
+
+        // Highlight new items in the JSON output
+        let result = escapeHtml(jsonStr);
+        newItemMarkers.forEach(marker => {
+            const escapedMarker = escapeHtml(marker);
+            // Wrap matched items with highlight span
+            result = result.replace(escapedMarker, '<span class="json-new-item">' + escapedMarker + '</span>');
+        });
+
+        return result;
     }
 
     // --- Diff engine (Myers-like, simplified) ---
@@ -1102,10 +1465,19 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     document.getElementById('btn-back-classify').addEventListener('click', () => {
-        // Go back to the last item so user can continue editing
-        currentItemIndex = currentTarget.items.length - 1;
-        showStep(stepClassify);
-        renderClassifyItem();
+        // If we have field configs, go back to classify step
+        if (fieldConfigs.length > 0 && currentTarget) {
+            currentItemIndex = currentTarget.items.length - 1;
+            showStep(stepClassify);
+            renderClassifyItem();
+        } else {
+            // Otherwise go back to the Configure Fields step
+            populateTargetSelect();
+            updateExistingFieldsHint();
+            renderFieldRows();
+            updateNewItemsCount();
+            showStep(stepFields);
+        }
     });
 
     document.getElementById('btn-restart').addEventListener('click', () => {
@@ -1119,6 +1491,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function resetAll() {
         rawData = null;
         originalDataSnapshot = null;
+        originalItemCounts = {};
         fileName = '';
         collections = [];
         fieldConfigs = [];
@@ -1128,6 +1501,7 @@ document.addEventListener('DOMContentLoaded', function () {
         currentOnComplete = null;
         history = [];
         newItemsAddedCount = 0;
+        newItemsAdded = [];
         fileInput.value = '';
         dropArea.innerHTML = '<p>Drag &amp; drop a JSON file here or click to select</p>';
         jsonPaste.value = '';
@@ -1138,11 +1512,13 @@ document.addEventListener('DOMContentLoaded', function () {
         classifyCard.innerHTML = '';
         classifyProgress.innerHTML = '';
         historyList.innerHTML = '';
-        jsonOutput.textContent = '';
+        jsonOutput.innerHTML = '';
         resultsSummary.innerHTML = '';
         jsonSummary.innerHTML = '';
         existingFieldsHint.classList.add('hidden');
         newItemsCountEl.classList.add('hidden');
+        newItemsListEl.innerHTML = '';
+        newItemsListEl.classList.add('hidden');
     }
 
     function escapeHtml(str) {
