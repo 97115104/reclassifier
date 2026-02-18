@@ -1,0 +1,138 @@
+{
+  "projects": [
+    {
+      "name": "attest.ink",
+      "description": "AI Attribution Badges for the Modern Web",
+      "github_url": "https://github.com/97115104/attest.ink",
+      "website": "https://attest.ink",
+      "language": "HTML",
+      "license": "MIT License",
+      "stars": 1,
+      "topics": ["ai", "attribution-methods", "attributions", "open-source"],
+      "featured": true
+    },
+    {
+      "name": "qualityprompts",
+      "description": "Improve the quality of a prompt",
+      "github_url": "https://github.com/97115104/qualityprompts",
+      "website": "https://97115104.github.io/qualityprompts/",
+      "language": "JavaScript",
+      "license": "MIT License",
+      "topics": ["ai", "prompts", "tools"],
+      "featured": true
+    },
+    {
+      "name": "reclassifier",
+      "description": "Tool for reclassifying JSON data",
+      "github_url": "https://github.com/97115104/reclassifier",
+      "website": "https://97115104.github.io/reclassifier/",
+      "language": "JavaScript",
+      "license": "MIT License",
+      "topics": ["tools", "json", "data"],
+      "featured": true
+    },
+    {
+      "name": "autophage-smart-contracts",
+      "description": "Autophage Protocol smart contracts and demo tool",
+      "github_url": "https://github.com/97115104/autophage-smart-contracts",
+      "website": "https://contracts.autophage.xyz/",
+      "language": "JavaScript",
+      "license": "Apache License 2.0",
+      "topics": ["blockchain", "smart-contracts", "web3"],
+      "featured": true
+    },
+    {
+      "name": "share-links",
+      "description": "Share social links easy with a dedicated, easy to modify, mobile-optimized, website.",
+      "github_url": "https://github.com/97115104/share-links",
+      "website": "https://links.97115104.com/",
+      "language": "CSS",
+      "topics": ["personal", "links"],
+      "featured": false
+    },
+    {
+      "name": "model-development",
+      "description": "ML model development experiments and tools",
+      "github_url": "https://github.com/97115104/model-development",
+      "website": "https://97115104.github.io/model-development/",
+      "language": "Python",
+      "topics": ["machine-learning", "python"],
+      "featured": false
+    },
+    {
+      "name": "PyTheus",
+      "description": "PyTheus, a highly-efficient inverse-design algorithm for quantum optical experiments",
+      "github_url": "https://github.com/97115104/PyTheus",
+      "website": null,
+      "language": "Python",
+      "license": "MIT License",
+      "topics": ["quantum", "research"],
+      "featured": false
+    },
+    {
+      "name": "lexicographer-companion",
+      "description": "Dictionary with offline support created by Rabbit R1.",
+      "github_url": "https://github.com/97115104/lexicographer-companion",
+      "website": "https://97115104.github.io/lexicographer-companion/",
+      "language": "JavaScript",
+      "topics": ["tools", "dictionary"],
+      "featured": false
+    },
+    {
+      "name": "cruisecard-qr-generator-atlantis",
+      "description": "QR code generator for cruise cards",
+      "github_url": "https://github.com/97115104/cruisecard-qr-generator-atlantis",
+      "website": "https://cruisecard.gay/",
+      "language": "HTML",
+      "topics": ["tools", "qr-code"],
+      "featured": false
+    },
+    {
+      "name": "svg-png",
+      "description": "SVG to PNG Converter",
+      "github_url": "https://github.com/97115104/svg-png",
+      "website": "https://97115104.github.io/svg-png/",
+      "language": "JavaScript",
+      "license": "MIT License",
+      "topics": ["tools", "converter"],
+      "featured": false
+    },
+    {
+      "name": "img-background-removal",
+      "description": "Image background removal tool",
+      "github_url": "https://github.com/97115104/img-background-removal",
+      "website": "https://97115104.github.io/img-background-removal/",
+      "language": "JavaScript",
+      "license": "MIT License",
+      "topics": ["tools", "images"],
+      "featured": false
+    },
+    {
+      "name": "oss-ai-orchistration",
+      "description": "Tools and tests for open-source AI orchestration",
+      "github_url": "https://github.com/97115104/oss-ai-orchistration",
+      "website": null,
+      "language": "JavaScript",
+      "topics": ["ai", "orchestration"],
+      "featured": false
+    },
+    {
+      "name": "sh.external-brand-guide",
+      "description": "Brand and style guide for external and community use.",
+      "github_url": "https://github.com/97115104/sh.external-brand-guide",
+      "website": null,
+      "language": null,
+      "topics": ["design", "brand"],
+      "featured": false
+    },
+    {
+      "name": "sp1-age-verifier-example",
+      "description": "SP1 age verification example using zero-knowledge proofs",
+      "github_url": "https://github.com/97115104/sp1-age-verifier-example",
+      "website": null,
+      "language": "Rust",
+      "topics": ["zk", "rust", "privacy"],
+      "featured": false
+    }
+  ]
+}

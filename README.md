@@ -1,6 +1,6 @@
 # Reclassifier
 
-A serverless web tool for adding new fields to JSON data. Upload a JSON file, define new fields, classify each object interactively, and download the updated JSON.
+A serverless web tool for adding items and editing fields in JSON data. Upload a JSON file, add new entries, define fields to edit, and download the updated JSON.
 
 **Live:** [https://97115104.github.io/reclassifier/](https://97115104.github.io/reclassifier/)
 
@@ -11,6 +11,7 @@ A serverless web tool for adding new fields to JSON data. Upload a JSON file, de
 - **Flexible field types** — Text, long text, number, boolean, or custom choice fields
 - **Smart display** — Auto-detects title and image keys to give context while classifying
 - **Batch processing** — Work through every object one at a time with progress tracking
+- **Add new items** — Add new entries to your collections directly from the interface
 - **Skip support** — Skip objects you don't want to classify
 - **Export** — Download the modified JSON or copy it to clipboard
 
@@ -20,11 +21,13 @@ A serverless web tool for adding new fields to JSON data. Upload a JSON file, de
 2. **Review** the parsed structure — see what collections were found and their fields
 3. **Add fields** — Define one or more new fields to add, choosing the input type (text, choice, boolean, etc.)
 4. **Classify** — For each object, see its existing data and fill in the new field values
-5. **Export** — Review a summary of changes, then download or copy the updated JSON
+5. **Add items** — Use the "+ Add New Item" button to add new entries to your collection
+6. **Export** — Review a summary of changes, then download or copy the updated JSON
 
 ## Example Use Cases
 
 - Add genre classifications to a list of books
+- Add new books or projects to existing JSON collections
 - Tag products with categories
 - Add review scores to a collection of items
 - Mark records as active/inactive

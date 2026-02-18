@@ -9,9 +9,26 @@
 </head>
 <body>
     <h1>Reclassifier</h1>
-    <p class="subtitle">Add new fields to your JSON data</p>
+    <p class="subtitle">Add items and edit fields in your JSON data</p>
     <div class="how-to-use-row">
         <button id="btn-info" class="btn-how-to-use">How to use</button>
+    </div>
+
+    <!-- Add New Item Modal -->
+    <div id="add-item-modal" class="modal-overlay hidden">
+        <div class="modal modal-wide">
+            <div class="modal-header">
+                <h3>Add New Item</h3>
+                <button id="btn-close-add-item" class="btn-modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="add-item-fields"></div>
+                <div class="add-item-actions">
+                    <button id="btn-cancel-add-item" class="btn-secondary">Cancel</button>
+                    <button id="btn-save-new-item">Add Item</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Info Modal -->
@@ -31,11 +48,13 @@
                     <li>Enrich JSON exports with human review scores or notes</li>
                     <li>Tag and annotate data for fine-tuning or evaluation pipelines</li>
                     <li>Standardize inconsistent field values across a collection</li>
+                    <li><strong>Add new items</strong> to your JSON collections (books, projects, etc.)</li>
                 </ul>
                 <h4>How it works</h4>
                 <ol>
                     <li>Upload a JSON file</li>
-                    <li>Choose fields to add or existing fields to edit</li>
+                    <li><strong>Add new items</strong> to your collection (books, projects, etc.)</li>
+                    <li><strong>Edit fields</strong> on existing items &mdash; add new fields or modify existing ones</li>
                     <li>Walk through each object, filling in values</li>
                     <li>Download the updated JSON</li>
                 </ol>
@@ -68,34 +87,52 @@
             <div id="json-summary"></div>
             <div class="actions">
                 <button id="btn-back-upload" class="btn-secondary">Back</button>
-                <button id="btn-to-fields">Configure New or Edit Existing Fields</button>
+                <button id="btn-to-fields">Add Items or Edit Fields</button>
             </div>
         </div>
 
         <!-- Step 3: Configure Fields -->
         <div id="step-fields" class="step hidden">
-            <h3>Add New or Edit Existing Fields</h3>
+            <h3>Configure Items &amp; Fields</h3>
             <div class="field-config-header">
                 <label>
-                    Target:
+                    Target Collection:
                     <select id="target-select"></select>
                 </label>
             </div>
-            <div id="existing-fields-hint" class="existing-fields-hint hidden">
-                <span class="hint-label">Existing fields:</span>
-                <span id="existing-fields-list"></span>
+
+            <!-- Add New Items Section -->
+            <div class="config-section">
+                <h4 class="config-section-header">Add New Items</h4>
+                <p class="config-section-desc">Add new entries (books, projects, etc.) to this collection.</p>
+                <button id="btn-add-item-step3" class="btn-add-item-inline">+ Add New Item to Collection</button>
+                <div id="new-items-count" class="new-items-count hidden"></div>
             </div>
-            <div id="fields-list"></div>
-            <button id="btn-add-field" class="btn-add">+ Add Field</button>
+
+            <!-- Edit Fields Section -->
+            <div class="config-section">
+                <h4 class="config-section-header">Edit Fields on Existing Items</h4>
+                <p class="config-section-desc">Add new fields or edit existing fields across all items in the collection.</p>
+                <div id="existing-fields-hint" class="existing-fields-hint hidden">
+                    <span class="hint-label">Click to edit existing fields:</span>
+                    <span id="existing-fields-list"></span>
+                </div>
+                <div id="fields-list"></div>
+                <button id="btn-add-field" class="btn-add">+ Add New Field</button>
+            </div>
+
             <div class="actions">
                 <button id="btn-back-summary" class="btn-secondary">Back</button>
-                <button id="btn-to-classify" disabled>Start Classifying</button>
+                <button id="btn-to-classify">Start Editing Items</button>
             </div>
         </div>
 
         <!-- Step 4: Classify -->
         <div id="step-classify" class="step hidden">
-            <div id="classify-progress"></div>
+            <div class="classify-header">
+                <div id="classify-progress"></div>
+                <button id="btn-add-item" class="btn-add-item">+ Add New Item</button>
+            </div>
             <div class="classify-layout">
                 <div class="classify-main">
                     <div id="classify-card" class="classify-card"></div>

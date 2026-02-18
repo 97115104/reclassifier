@@ -417,6 +417,58 @@ button:disabled {
     background: #fff;
 }
 
+/* Config Sections */
+.config-section {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.config-section-header {
+    margin: 0 0 4px 0;
+    font-size: 15px;
+    color: #333;
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+.config-section-desc {
+    margin: 0 0 12px 0;
+    font-size: 13px;
+    color: #777;
+}
+
+.btn-add-item-inline {
+    background: #4CAF50;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-add-item-inline:hover {
+    background: #3e8e41;
+}
+
+.new-items-count {
+    margin-top: 10px;
+    padding: 8px 12px;
+    background: #e3f2fd;
+    border: 1px solid #90caf9;
+    border-radius: 4px;
+    font-size: 13px;
+    color: #1565c0;
+}
+
+.new-items-count.hidden {
+    display: none;
+}
+
 .field-row {
     display: flex;
     gap: 8px;
@@ -898,6 +950,99 @@ button:disabled {
 
 .author-info {
     display: inline-block;
+}
+
+/* Add New Item */
+.classify-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.classify-header #classify-progress {
+    flex: 1;
+}
+
+.btn-add-item {
+    background: #4CAF50;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    font-size: 13px;
+    border-radius: 4px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.2s;
+}
+
+.btn-add-item:hover {
+    background: #3e8e41;
+}
+
+.modal-wide {
+    max-width: 700px;
+}
+
+.add-item-fields {
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.add-item-field-group {
+    margin-bottom: 16px;
+}
+
+.add-item-field-group label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 4px;
+    color: #333;
+    font-size: 14px;
+}
+
+.add-item-field-group input,
+.add-item-field-group textarea,
+.add-item-field-group select {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    font-family: inherit;
+}
+
+.add-item-field-group input:focus,
+.add-item-field-group textarea:focus,
+.add-item-field-group select:focus {
+    outline: none;
+    border-color: #2196F3;
+}
+
+.add-item-field-group textarea {
+    min-height: 80px;
+    resize: vertical;
+}
+
+.add-item-field-group .field-type-hint {
+    font-size: 11px;
+    color: #888;
+    margin-top: 2px;
+}
+
+.add-item-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid #e0e0e0;
+}
+
+.add-item-required {
+    color: #c62828;
+    margin-left: 2px;
 }
 
 /* Responsive */

@@ -349,6 +349,211 @@ document.addEventListener('DOMContentLoaded', function () {
 
     document.getElementById('btn-add-field').addEventListener('click', () => addFieldRow());
 
+    // ============================
+    // Add New Item Modal
+    // ============================
+    const addItemModal = document.getElementById('add-item-modal');
+    const addItemFields = document.getElementById('add-item-fields');
+    const btnAddItem = document.getElementById('btn-add-item');
+    const btnAddItemStep3 = document.getElementById('btn-add-item-step3');
+    const btnCloseAddItem = document.getElementById('btn-close-add-item');
+    const btnCancelAddItem = document.getElementById('btn-cancel-add-item');
+    const btnSaveNewItem = document.getElementById('btn-save-new-item');
+    const newItemsCountEl = document.getElementById('new-items-count');
+
+    let newItemsAddedCount = 0;
+    let addItemContext = null; // 'step3' or 'step4'
+
+    function openAddItemModal(context) {
+        addItemContext = context || 'step4';
+        
+        // Get the target collection
+        let targetCollection;
+        if (addItemContext === 'step3') {
+            const targetIdx = parseInt(targetSelect.value);
+            targetCollection = collections[targetIdx];
+        } else {
+            targetCollection = currentTarget;
+        }
+
+        if (!targetCollection || !targetCollection.items) {
+            showToast('No collection selected.');
+            return;
+        }
+
+        // Get all unique keys from existing items to build the form
+        const allKeys = JSONParser._commonKeys(targetCollection.items);
+        
+        addItemFields.innerHTML = '';
+
+        if (allKeys.length === 0) {
+            addItemFields.innerHTML = '<p style="color:#888;font-size:13px;">No existing fields found. Add at least one item manually first.</p>';
+        }
+
+        allKeys.forEach(key => {
+            // Sample values to determine field type
+            const sampleValues = targetCollection.items
+                .map(item => item[key])
+                .filter(v => v !== undefined && v !== null);
+            
+            const fieldType = detectFieldType(sampleValues);
+            const group = document.createElement('div');
+            group.className = 'add-item-field-group';
+
+            const label = document.createElement('label');
+            label.textContent = key;
+            group.appendChild(label);
+
+            let input;
+            if (fieldType === 'boolean') {
+                input = document.createElement('select');
+                input.innerHTML = '<option value="">-- Select --</option><option value="true">True</option><option value="false">False</option>';
+            } else if (fieldType === 'number') {
+                input = document.createElement('input');
+                input.type = 'text';
+                input.inputMode = 'numeric';
+                input.placeholder = 'Enter a number';
+            } else if (fieldType === 'longtext') {
+                input = document.createElement('textarea');
+                input.placeholder = 'Enter value...';
+                input.rows = 3;
+            } else if (fieldType === 'url') {
+                input = document.createElement('input');
+                input.type = 'url';
+                input.placeholder = 'https://...';
+            } else {
+                input = document.createElement('input');
+                input.type = 'text';
+                input.placeholder = 'Enter value...';
+            }
+            input.dataset.fieldName = key;
+            input.dataset.fieldType = fieldType;
+            group.appendChild(input);
+
+            // Add type hint
+            const hint = document.createElement('div');
+            hint.className = 'field-type-hint';
+            hint.textContent = fieldType === 'longtext' ? 'text' : fieldType;
+            group.appendChild(hint);
+
+            addItemFields.appendChild(group);
+        });
+
+        addItemModal.classList.remove('hidden');
+    }
+
+    function detectFieldType(sampleValues) {
+        if (sampleValues.length === 0) return 'text';
+        
+        const firstNonNull = sampleValues[0];
+        
+        if (typeof firstNonNull === 'boolean') return 'boolean';
+        if (typeof firstNonNull === 'number') return 'number';
+        if (typeof firstNonNull === 'string') {
+            // Check if it's a URL
+            if (sampleValues.every(v => typeof v === 'string' && /^https?:\/\//i.test(v))) {
+                return 'url';
+            }
+            // Check if it's long text (average > 100 chars)
+            const avgLen = sampleValues.reduce((sum, v) => sum + (typeof v === 'string' ? v.length : 0), 0) / sampleValues.length;
+            if (avgLen > 100) return 'longtext';
+            return 'text';
+        }
+        return 'text';
+    }
+
+    function closeAddItemModal() {
+        addItemModal.classList.add('hidden');
+        addItemFields.innerHTML = '';
+        addItemContext = null;
+    }
+
+    function updateNewItemsCount() {
+        if (newItemsAddedCount > 0) {
+            newItemsCountEl.textContent = newItemsAddedCount + ' new item' + (newItemsAddedCount !== 1 ? 's' : '') + ' added';
+            newItemsCountEl.classList.remove('hidden');
+        } else {
+            newItemsCountEl.classList.add('hidden');
+        }
+    }
+
+    function saveNewItem() {
+        const newItem = {};
+        let hasValue = false;
+
+        addItemFields.querySelectorAll('[data-field-name]').forEach(input => {
+            const fieldName = input.dataset.fieldName;
+            const fieldType = input.dataset.fieldType;
+            let value = input.value.trim();
+
+            if (value === '') return;
+
+            hasValue = true;
+
+            if (fieldType === 'boolean') {
+                newItem[fieldName] = value === 'true';
+            } else if (fieldType === 'number') {
+                const num = Number(value);
+                newItem[fieldName] = isNaN(num) ? value : num;
+            } else {
+                newItem[fieldName] = value;
+            }
+        });
+
+        if (!hasValue) {
+            showToast('Please fill in at least one field.');
+            return;
+        }
+
+        // Get the target collection based on context
+        let targetCollection;
+        if (addItemContext === 'step3') {
+            const targetIdx = parseInt(targetSelect.value);
+            targetCollection = collections[targetIdx];
+        } else {
+            targetCollection = currentTarget;
+        }
+
+        // Add the new item to the collection
+        targetCollection.items.push(newItem);
+        newItemsAddedCount++;
+
+        // Get title for display
+        const titleKey = JSONParser.detectTitleKey(Object.keys(newItem));
+        const itemTitle = titleKey && newItem[titleKey] ? String(newItem[titleKey]) : 'New Item';
+
+        closeAddItemModal();
+        showToast('Added: ' + itemTitle);
+
+        if (addItemContext === 'step3') {
+            // In Step 3, just update the count display
+            updateNewItemsCount();
+        } else {
+            // In Step 4, add to history and jump to the new item
+            history.push({
+                itemIndex: history.length,
+                title: itemTitle,
+                status: 'modified',
+                fieldsSnapshot: { ...newItem }
+            });
+            currentItemIndex = targetCollection.items.length - 1;
+            renderClassifyItem();
+        }
+    }
+
+    btnAddItem.addEventListener('click', () => openAddItemModal('step4'));
+    btnAddItemStep3.addEventListener('click', () => openAddItemModal('step3'));
+    btnCloseAddItem.addEventListener('click', closeAddItemModal);
+    btnCancelAddItem.addEventListener('click', closeAddItemModal);
+    btnSaveNewItem.addEventListener('click', saveNewItem);
+
+    // Close modal on overlay click
+    addItemModal.addEventListener('click', (e) => {
+        if (e.target === addItemModal) {
+            closeAddItemModal();
+        }
+    });
+
     function syncFieldConfigs() {
         fieldConfigs = [];
         fieldsList.querySelectorAll('.field-row').forEach(row => {
@@ -375,17 +580,33 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function updateClassifyButton() {
-        const btn = document.getElementById('btn-to-classify');
-        const hasValidField = fieldConfigs.some(f => f.fieldName.length > 0);
-        btn.disabled = !hasValidField;
+        // Button is always enabled now - users can add items OR configure fields
+        // No longer need to disable
     }
 
-    document.getElementById('btn-back-summary').addEventListener('click', () => showStep(stepSummary));
+    document.getElementById('btn-back-summary').addEventListener('click', () => {
+        // Reset new items count when going back
+        newItemsAddedCount = 0;
+        updateNewItemsCount();
+        showStep(stepSummary);
+    });
 
     document.getElementById('btn-to-classify').addEventListener('click', () => {
         syncFieldConfigs();
         const validFields = fieldConfigs.filter(f => f.fieldName.length > 0);
-        if (validFields.length === 0) return;
+        
+        if (validFields.length === 0 && newItemsAddedCount === 0) {
+            showToast('Add new items or configure fields to edit first.');
+            return;
+        }
+
+        if (validFields.length === 0) {
+            // Only items added, no fields to edit - go straight to results
+            originalDataSnapshot = JSON.stringify(rawData, null, 2);
+            showResults();
+            return;
+        }
+
         fieldConfigs = validFields;
         startClassification();
     });
@@ -906,6 +1127,7 @@ document.addEventListener('DOMContentLoaded', function () {
         currentFields = null;
         currentOnComplete = null;
         history = [];
+        newItemsAddedCount = 0;
         fileInput.value = '';
         dropArea.innerHTML = '<p>Drag &amp; drop a JSON file here or click to select</p>';
         jsonPaste.value = '';
@@ -920,6 +1142,7 @@ document.addEventListener('DOMContentLoaded', function () {
         resultsSummary.innerHTML = '';
         jsonSummary.innerHTML = '';
         existingFieldsHint.classList.add('hidden');
+        newItemsCountEl.classList.add('hidden');
     }
 
     function escapeHtml(str) {
