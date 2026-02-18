@@ -955,8 +955,9 @@ button:disabled {
 .author-links {
     margin-top: 8px;
     display: flex;
-    gap: 16px;
-    justify-content: center;
+    flex-direction: column;
+    gap: 6px;
+    align-items: center;
 }
 
 .author-links a {
